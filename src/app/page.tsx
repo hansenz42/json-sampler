@@ -37,18 +37,29 @@ export default function Home() {
   const { setError } = useError();
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmit = async (json: string, listLength: number) => {
+  const handleSubmit = async (json: string, listLength: number, convertUnicode: boolean, applyListLength: boolean) => {
     try {
       // 处理 JSON 数据，对长列表进行采样
       const processData = (jsonString: string): any => {
+        // 如果需要转换 Unicode，先进行转换
+        if (convertUnicode) {
+          jsonString = jsonString.replace(/\\u([0-9a-fA-F]{4})/g, (match, hex) => {
+            return String.fromCharCode(parseInt(hex, 16));
+          });
+          // 处理 \x 格式的 Unicode 编码
+          jsonString = jsonString.replace(/\\x([0-9a-fA-F]{2})/g, (match, hex) => {
+            return String.fromCharCode(parseInt(hex, 16));
+          });
+        }
+
         // 直接解析 JSON，因为在 JsonSamplerForm 中已经验证过了
         const data = JSON.parse(jsonString);
 
         // 处理数据
         const processObject = (obj: any): any => {
           if (Array.isArray(obj)) {
-            // 如果数组长度超过保留长度，则进行采样，只保留前 listLength 项
-            return obj.length > listLength ? obj.slice(0, listLength) : obj;
+            // 如果启用了列表长度限制并且数组长度超过保留长度，则进行采样，只保留前 listLength 项
+            return (applyListLength && obj.length > listLength) ? obj.slice(0, listLength) : obj;
           } else if (obj !== null && typeof obj === "object") {
             // 递归处理对象属性
             const result: Record<string, any> = {};
@@ -67,6 +78,8 @@ export default function Home() {
       const processedData = processData(json);
 
       console.log("处理后的 JSON 数据:", processedData);
+      console.log("是否转换 Unicode:", convertUnicode);
+      console.log("是否应用列表长度限制:", applyListLength);
       // 返回处理后的 JSON 字符串
       const result = JSON.stringify(processedData, null, 2);
       setResult(result);
@@ -91,9 +104,9 @@ export default function Home() {
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 md:px-8 font-sans bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900">
       <PageHeader
-        title="JSON 采样器"
-        subtitle="对 JSON 中的长列表采样"
-        badgeText="🔍 JSON SAMPLER"
+        title="JSON 列表采样器"
+        subtitle="JSON 里的列表太长不方便放到文档里？你来定一个长度，轻松采样 JSON 里的 list。"
+        badgeText="🔍 JSON Sampler"
       />
 
       <main className="max-w-3xl mx-auto space-y-8">

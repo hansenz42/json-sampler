@@ -25,12 +25,19 @@ interface ResultContentProps {
 export function ResultContent({ result, onCopy, className = "" }: ResultContentProps) {
   const [copied, setCopied] = useState(false);
   const [highlightedCode, setHighlightedCode] = useState('');
+  const lineNumbersRef = useRef<HTMLDivElement>(null);
+  const codeContentRef = useRef<HTMLPreElement>(null);
   
-  // 处理 JSON 高亮
+  // 处理 JSON 高亮，限制最多显示 100 行
   useEffect(() => {
     if (result) {
       try {
-        const highlighted = hljs.highlight(result, { language: 'json' }).value;
+        // 限制最多显示 100 行
+        const lines = result.split('\n');
+        const limitedLines = lines.slice(0, 100);
+        const limitedResult = limitedLines.join('\n');
+        
+        const highlighted = hljs.highlight(limitedResult, { language: 'json' }).value;
         setHighlightedCode(highlighted);
       } catch (error) {
         console.error('高亮处理错误:', error);
@@ -81,12 +88,13 @@ export function ResultContent({ result, onCopy, className = "" }: ResultContentP
         <div className="flex w-full overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-md border border-slate-200 dark:border-slate-700 text-sm">
           {/* 行号 */}
           <div 
+            ref={lineNumbersRef}
             className="py-4 px-3 text-right text-xs select-none bg-muted/10 dark:bg-muted/20 border-r border-slate-200 dark:border-slate-700 scrollbar-hide"
             aria-hidden="true"
-            style={{ minWidth: '3rem' }}
+            style={{ minWidth: '3rem', maxHeight: '500px', overflowY: 'hidden' }}
           >
             <div className="flex flex-col">
-              {result.split('\n').map((_, index) => (
+              {result.split('\n').slice(0, 100).map((_, index) => (
                 <div 
                   key={index} 
                   className="h-5 leading-5 text-slate-500 dark:text-slate-400 font-mono text-[0.7rem] pr-1 opacity-70"
@@ -98,7 +106,16 @@ export function ResultContent({ result, onCopy, className = "" }: ResultContentP
           </div>
           
           {/* 结果内容 */}
-          <pre className="overflow-x-auto p-4 w-full">
+          <pre 
+            ref={codeContentRef}
+            className="overflow-x-auto p-4 w-full" 
+            style={{ maxHeight: '500px', overflowY: 'auto' }}
+            onScroll={(e) => {
+              if (lineNumbersRef.current) {
+                lineNumbersRef.current.scrollTop = e.currentTarget.scrollTop;
+              }
+            }}
+          >
             <code 
               className="hljs-custom-theme" 
               dangerouslySetInnerHTML={{ __html: highlightedCode || result }} 
