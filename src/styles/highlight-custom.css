@@ -1,0 +1,41 @@
+/* 自定义高亮样式，增强深色模式下的可读性 */
+
+/* 增强字符串颜色对比度 */
+.hljs-custom-theme .hljs-string {
+  color: #9cdcfe !important;
+}
+
+/* 增强属性名颜色对比度 */
+.hljs-custom-theme .hljs-attr {
+  color: #e06c75 !important;
+}
+
+/* 增强数值颜色对比度 */
+.hljs-custom-theme .hljs-number {
+  color: #b5cea8 !important;
+}
+
+/* 增强布尔值颜色对比度 */
+.hljs-custom-theme .hljs-literal {
+  color: #569cd6 !important;
+}
+
+/* 增强 null 值颜色对比度 */
+.hljs-custom-theme .hljs-keyword {
+  color: #c586c0 !important;
+}
+
+/* 增强标点符号可见性 */
+.hljs-custom-theme .hljs-punctuation {
+  color: #d4d4d4 !important;
+}
+
+/* 确保深色模式下文本基础颜色足够亮 */
+.dark .hljs-custom-theme {
+  color: #d4d4d4 !important;
+}
+
+/* 调整背景色，确保与深色模式协调 */
+.dark .hljs-custom-theme {
+  background-color: transparent !important;
+}

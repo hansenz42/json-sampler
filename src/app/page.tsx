@@ -1,103 +1,186 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { JsonSamplerForm } from "@/components/json-sampler-form";
+import { ResultContent } from "@/components/result-card";
+import { useError, ErrorType } from "@/contexts/ErrorContext";
+import Footer from "@/components/Footer";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+// 页面头部组件
+const PageHeader = ({
+  title,
+  subtitle,
+  badgeText,
+}: {
+  title: string;
+  subtitle: string;
+  badgeText: string;
+}) => (
+  <div className="mb-8 text-center">
+    <div className="inline-flex items-center justify-center px-3 py-1 mb-4 text-sm font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+      {badgeText}
+    </div>
+    <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
+      {title}
+    </h1>
+    <p className="mt-3 text-lg text-gray-600 dark:text-gray-300">{subtitle}</p>
+  </div>
+);
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [jsonInput, setJsonInput] = useState("");
+  const [result, setResult] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { setError } = useError();
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const handleSubmit = async (json: string, listLength: number) => {
+    try {
+      // 处理 JSON 数据，对长列表进行采样
+      const processData = (jsonString: string): any => {
+        // 直接解析 JSON，因为在 JsonSamplerForm 中已经验证过了
+        const data = JSON.parse(jsonString);
+
+        // 处理数据
+        const processObject = (obj: any): any => {
+          if (Array.isArray(obj)) {
+            // 如果数组长度超过保留长度，则进行采样，只保留前 listLength 项
+            return obj.length > listLength ? obj.slice(0, listLength) : obj;
+          } else if (obj !== null && typeof obj === "object") {
+            // 递归处理对象属性
+            const result: Record<string, any> = {};
+            for (const key in obj) {
+              result[key] = processObject(obj[key]);
+            }
+            return result;
+          }
+          return obj;
+        };
+
+        return processObject(data);
+      };
+
+      // 处理 JSON 数据
+      const processedData = processData(json);
+
+      console.log("处理后的 JSON 数据:", processedData);
+      // 返回处理后的 JSON 字符串
+      const result = JSON.stringify(processedData, null, 2);
+      setResult(result);
+      return result;
+    } catch (error) {
+      // 捕获并抛出错误，包括 JSON 解析错误
+      throw error;
+    }
+  };
+
+  const exampleJson = `{
+  "example": "这是一个示例 JSON 数据",
+  "items": [1, 2, 3, 4, 5],
+  "nested": {
+    "key1": "value1",
+    "key2": 123,
+    "key3": true
+  },
+  "description": "请在此处输入或粘贴您的 JSON 数据"
+}`;
+
+  return (
+    <div className="min-h-screen py-8 px-4 sm:px-6 md:px-8 font-sans bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900">
+      <PageHeader
+        title="JSON 采样器"
+        subtitle="对 JSON 中的长列表采样"
+        badgeText="🔍 JSON SAMPLER"
+      />
+
+      <main className="max-w-3xl mx-auto space-y-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="border border-gray-100 dark:border-gray-800 shadow-lg bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-800">
+            <CardContent className="p-6 pt-4">
+            <div className="space-y-4">
+              <div className="flex flex-col gap-4">
+                <JsonSamplerForm
+                  onSubmit={handleSubmit}
+                  onInputChange={setJsonInput}
+                  value={jsonInput}
+                  placeholder={exampleJson}
+                  isLoading={isLoading}
+                  defaultListLength={5}
+                  onError={(error) =>
+                    setError({
+                      message: error.message,
+                      type: error.type as
+                        | "error"
+                        | "warning"
+                        | "info"
+                        | undefined,
+                      source: error.source,
+                    })
+                  }
+                />
+              </div>
+            </div>
+          </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* 结果展示 */}
+        {result && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="relative"
+            layout
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-400 to-indigo-500 dark:from-blue-500 dark:to-indigo-600"></div>
+            <Card className={cn(
+              "overflow-hidden",
+              "border border-gray-200 dark:border-gray-800", 
+              "shadow-md hover:shadow-xl transition-all duration-300",
+              "bg-gradient-to-br from-white to-blue-50 dark:from-gray-900 dark:to-blue-950/20",
+              "rounded-xl",
+              "pl-2" // 添加左侧内边距，为蓝色条留出空间
+            )}>
+              <CardContent className="p-6 pt-2">
+                <ResultContent
+                  result={result}
+                  onCopy={() => {
+                    // 可以在这里添加复制成功的提示
+                    console.log("结果已复制到剪贴板");
+                  }}
+                  className="mt-2"
+                />
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* 页脚 */}
+        <Footer
+          version="v1.0"
+          companyName={
+            <a
+              href="https://www.assen.top"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline text-primary"
+            >
+              浩森 Hansen
+            </a>
+          }
+        />
+
+        {/* 底部引用元素，用于滚动定位 */}
+        <div ref={bottomRef} className="h-1" />
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }

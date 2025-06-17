@@ -1,0 +1,62 @@
+{
+    "id": 1,
+    "name": "示例数据",
+    "description": "这是一个包含长列表的JSON结构体示例",
+    "long_list": [
+      {
+        "item_id": 1,
+        "item_name": "项目1",
+        "details": "这是项目1的详细信息"
+      },
+      {
+        "item_id": 2,
+        "item_name": "项目2",
+        "details": "这是项目2的详细信息"
+      },
+      {
+        "item_id": 3,
+        "item_name": "项目3",
+        "details": "这是项目3的详细信息"
+      },
+      {
+        "item_id": 4,
+        "item_name": "项目4",
+        "details": "这是项目4的详细信息"
+      },
+      {
+        "item_id": 5,
+        "item_name": "项目5",
+        "details": "这是项目5的详细信息"
+      },
+      {
+        "item_id": 6,
+        "item_name": "项目6",
+        "details": "这是项目6的详细信息"
+      },
+      {
+        "item_id": 7,
+        "item_name": "项目7",
+        "details": "这是项目7的详细信息"
+      },
+      {
+        "item_id": 8,
+        "item_name": "项目8",
+        "details": "这是项目8的详细信息"
+      },
+      {
+        "item_id": 9,
+        "item_name": "项目9",
+        "details": "这是项目9的详细信息"
+      },
+      {
+        "item_id": 10,
+        "item_name": "项目10",
+        "details": "这是项目10的详细信息"
+      }
+    ],
+    "nested_object": {
+      "key1": "value1",
+      "key2": "value2",
+      "key3": "value3"
+    }
+  }
