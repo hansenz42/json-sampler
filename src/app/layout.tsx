@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "JSON Sampler | JSON 列表抽样工具",
-  description: "为开发者打造的，过长 JSON 的抽样工具",
-  keywords: ["JSON", "抽样", "数据"],
+  title: "JSON Sampler | JSON 简短示例生成工具",
+  description: "JSON 太长写到文档里不方便？JSON Sampler 帮助你生成一个简短的 JSON 示例。",
+  keywords: ["JSON", "抽样", "数据", "简短", "示例", "文档"],
   authors: [{ name: "Hansen Zheng" }],
   creator: "Hansen Zheng",
   icons: {
