@@ -105,7 +105,7 @@ export default function Home() {
     <div className="min-h-screen py-8 px-4 sm:px-6 md:px-8 font-sans bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900">
       <PageHeader
         title="JSON 简短示例生成工具"
-        subtitle="JSON 里的列表太长不方便放到文档里？JSON Sampler 帮助你生成一个简短的 JSON 示例。"
+        subtitle="JSON 的列表太长不方便放到文档里？JSON Sampler 帮助你生成一个简短的 JSON 示例。"
         badgeText="✂️ JSON Sampler"
       />
 
