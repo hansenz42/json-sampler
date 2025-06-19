@@ -37,23 +37,12 @@ export default function Home() {
   const { setError } = useError();
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmit = async (json: string, listLength: number, convertUnicode: boolean, applyListLength: boolean) => {
+  const handleSubmit = async (json: string, listLength: number, applyListLength: boolean) => {
     try {
       // 处理 JSON 数据，对长列表进行采样
       const processData = (jsonString: string): any => {
-        // 如果需要转换 Unicode，先进行转换
-        if (convertUnicode) {
-          jsonString = jsonString.replace(/\\u([0-9a-fA-F]{4})/g, (match, hex) => {
-            return String.fromCharCode(parseInt(hex, 16));
-          });
-          // 处理 \x 格式的 Unicode 编码
-          jsonString = jsonString.replace(/\\x([0-9a-fA-F]{2})/g, (match, hex) => {
-            return String.fromCharCode(parseInt(hex, 16));
-          });
-        }
-
-        // 直接解析 JSON，因为在 JsonSamplerForm 中已经验证过了
-        const data = JSON.parse(jsonString);
+        // 直接解析 JSON 字符串，JSON.parse 会自动处理 Unicode 转义序列
+        const parsedData = JSON.parse(jsonString);
 
         // 处理数据
         const processObject = (obj: any): any => {
@@ -71,15 +60,15 @@ export default function Home() {
           return obj;
         };
 
-        return processObject(data);
+        return processObject(parsedData);
       };
 
       // 处理 JSON 数据
       const processedData = processData(json);
 
       console.log("处理后的 JSON 数据:", processedData);
-      console.log("是否转换 Unicode:", convertUnicode);
       console.log("是否应用列表长度限制:", applyListLength);
+      
       // 返回处理后的 JSON 字符串
       const result = JSON.stringify(processedData, null, 2);
       setResult(result);

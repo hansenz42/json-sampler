@@ -16,7 +16,7 @@ interface ErrorHandler {
 }
 
 interface JsonSamplerFormProps {
-  onSubmit: (json: string, listLength: number, convertUnicode: boolean, applyListLength: boolean) => Promise<string>;
+  onSubmit: (json: string, listLength: number, applyListLength: boolean) => Promise<string>;
   onInputChange: (value: string) => void;
   value: string;
   placeholder: string;
@@ -39,7 +39,6 @@ export function JsonSamplerForm({
   const [listLength, setListLength] = useState(defaultListLength);
   const [localIsLoading, setLocalIsLoading] = useState(false);
   const [errorLineNumber, setErrorLineNumber] = useState<number | null>(null);
-  const [convertUnicode, setConvertUnicode] = useState(false);
   const [applyListLength, setApplyListLength] = useState(true);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,7 +76,7 @@ export function JsonSamplerForm({
       
       setLocalIsLoading(true);
       // 调用提交函数，但不再更新输入框的值
-      await onSubmit(value, listLength, convertUnicode, applyListLength);
+      await onSubmit(value, listLength, applyListLength);
     } catch (error) {
       // 获取错误行号信息
       const errorMsg = (error as Error).message;
@@ -232,7 +231,7 @@ export function JsonSamplerForm({
                   disabled={isProcessing}
                 />
                 <Label htmlFor="apply-list-length" className="whitespace-nowrap cursor-pointer">
-                  List保留长度
+                  限制列表长度
                 </Label>
               </div>
               <Input
@@ -244,19 +243,6 @@ export function JsonSamplerForm({
                 className="w-24 border-slate-200 dark:border-slate-700"
                 disabled={isProcessing || !applyListLength}
               />
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="convert-unicode"
-                checked={convertUnicode}
-                onChange={(e) => setConvertUnicode(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                disabled={isProcessing}
-              />
-              <Label htmlFor="convert-unicode" className="whitespace-nowrap cursor-pointer">
-                Unicode 转中文
-              </Label>
             </div>
           </div>
         </div>
@@ -333,7 +319,7 @@ export function JsonSamplerForm({
                     <path d="M12 3v4"/>
                     <path d="M18.364 7.636a9 9 0 1 1-12.728 0"/>
                   </svg>
-                  采样
+                  处理
                 </motion.span>
               )}
             </Button>
