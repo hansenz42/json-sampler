@@ -25,16 +25,21 @@ interface ResultContentProps {
 export function ResultContent({ result, onCopy, className = "" }: ResultContentProps) {
   const [copied, setCopied] = useState(false);
   const [highlightedCode, setHighlightedCode] = useState('');
+  const [totalLines, setTotalLines] = useState(0);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
   const codeContentRef = useRef<HTMLPreElement>(null);
   
-  // 处理 JSON 高亮，限制最多显示 100 行
+  // 处理 JSON 高亮，限制最多显示 4096 行
   useEffect(() => {
     if (result) {
       try {
-        // 限制最多显示 100 行
+        // 计算总行数
         const lines = result.split('\n');
-        const limitedLines = lines.slice(0, 100);
+        setTotalLines(lines.length);
+        
+        // 限制最多显示 4096 行
+        const MAX_LINES = 4096;
+        const limitedLines = lines.slice(0, MAX_LINES);
         const limitedResult = limitedLines.join('\n');
         
         const highlighted = hljs.highlight(limitedResult, { language: 'json' }).value;
@@ -42,9 +47,11 @@ export function ResultContent({ result, onCopy, className = "" }: ResultContentP
       } catch (error) {
         console.error('高亮处理错误:', error);
         setHighlightedCode('');
+        setTotalLines(0);
       }
     } else {
       setHighlightedCode('');
+      setTotalLines(0);
     }
   }, [result]);
 
@@ -85,6 +92,15 @@ export function ResultContent({ result, onCopy, className = "" }: ResultContentP
         </Button>
       </div>
       <div className="relative">
+        {totalLines > 4096 ? (
+          <div className="text-xs text-muted-foreground mb-1 text-right px-1">
+            已显示前 4096 行，共 {totalLines} 行
+          </div>
+        ) : (
+          <div className="text-xs text-muted-foreground mb-1 text-right px-1">
+            共 {totalLines} 行
+          </div>
+        )}
         <div className="flex w-full overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-md border border-slate-200 dark:border-slate-700 text-sm">
           {/* 行号 */}
           <div 
@@ -94,7 +110,7 @@ export function ResultContent({ result, onCopy, className = "" }: ResultContentP
             style={{ minWidth: '3rem', maxHeight: '500px', overflowY: 'hidden' }}
           >
             <div className="flex flex-col">
-              {result.split('\n').slice(0, 100).map((_, index) => (
+              {result.split('\n').slice(0, 4096).map((_, index) => (
                 <div 
                   key={index} 
                   className="h-5 leading-5 text-slate-500 dark:text-slate-400 font-mono text-[0.7rem] pr-1 opacity-70"

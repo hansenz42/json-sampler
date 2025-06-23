@@ -34,18 +34,14 @@ export function JsonSamplerForm({
   defaultListLength = 5,
   onError,
 }: JsonSamplerFormProps) {
+  const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const lineNumbersRef = useRef<HTMLDivElement>(null);
   const [listLength, setListLength] = useState(defaultListLength);
   const [localIsLoading, setLocalIsLoading] = useState(false);
-  const [errorLineNumber, setErrorLineNumber] = useState<number | null>(null);
   const [applyListLength, setApplyListLength] = useState(true);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // 重置错误行号
-    setErrorLineNumber(null);
     
     if (!value.trim()) {
       onError?.({
@@ -82,9 +78,6 @@ export function JsonSamplerForm({
       const errorMsg = (error as Error).message;
       const { lineNumber, columnNumber } = getJsonErrorPosition(value, errorMsg);
       
-      // 设置错误行号，用于高亮显示
-      setErrorLineNumber(lineNumber);
-      
       // 如果有文本区域引用，将滚动到错误行
       if (textareaRef.current) {
         const lines = value.split('\n');
@@ -108,18 +101,13 @@ export function JsonSamplerForm({
   
   const isProcessing = isLoading || localIsLoading;
   
-  // 计算行号
-  const lineNumbers = useMemo(() => {
+  // 计算总行数
+  const totalLines = useMemo(() => {
     const lines = value.split('\n');
-    return Array.from({ length: Math.max(1, lines.length) }, (_, i) => i + 1);
+    return Math.max(1, lines.length);
   }, [value]);
 
-  // 同步滚动处理
-  const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
-    if (lineNumbersRef.current) {
-      lineNumbersRef.current.scrollTop = e.currentTarget.scrollTop;
-    }
-  };
+  // 不再需要单独的 handleScroll 函数，因为我们在 textarea 的 onScroll 事件中直接处理了滚动同步
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Tab') {
@@ -150,71 +138,42 @@ export function JsonSamplerForm({
         <div className="w-full space-y-4">
           <div className="space-y-2">
             <Label htmlFor="json-input">输入一个 JSON</Label>
-            <div className="relative flex w-full h-[600px] overflow-hidden rounded-md border border-slate-200 dark:border-slate-700">
-              {/* 行号 */}
-              <div 
-                ref={lineNumbersRef}
-                className="h-full overflow-y-auto py-3 px-3 text-right text-xs select-none bg-muted/10 dark:bg-muted/20 border-r border-slate-200 dark:border-slate-700 scrollbar-hide"
-                aria-hidden="true"
-                style={{ minWidth: '3rem' }}
-              >
-                <div className="min-h-full flex flex-col">
-                  {lineNumbers.map((num) => (
-                    <div 
-                      key={num} 
-                      className={cn(
-                        "h-5 leading-5 font-mono text-[0.7rem] pr-1",
-                        errorLineNumber === num
-                          ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-bold"
-                          : "text-slate-500 dark:text-slate-400 opacity-70"
-                      )}
-                    >
-                      {num}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              {/* 文本区域 */}
-              <div className="relative h-full w-full flex flex-col">
-                {/* 错误行高亮背景层 */}
-                {errorLineNumber !== null && (
-                  <div 
-                    className="absolute pointer-events-none w-full bg-red-100/30 dark:bg-red-900/20 z-10"
-                    style={{
-                      top: `${(errorLineNumber - 1) * 1.25}rem`, // 基于行高计算位置
-                      height: '1.25rem',
+            <div className="relative w-full h-[600px] overflow-hidden rounded-md border border-slate-200 dark:border-slate-700">
+              <div className="flex flex-col h-full w-full">
+                {/* 文本区域容器 */}
+                <div className="relative flex-1 overflow-hidden">
+                  {/* 使用原生 textarea */}
+                  <textarea
+                    id="json-input"
+                    value={value}
+                    onChange={(e: ChangeEvent<HTMLTextAreaElement>) => {
+                      onInputChange(e.target.value);
                     }}
+                    placeholder={placeholder}
+                    disabled={isProcessing}
+                    className={cn(
+                      "w-full h-full font-mono text-sm p-3 border-0 resize-none overflow-auto",
+                      "focus:outline-none focus:ring-0 focus:ring-offset-0"
+                    )}
+                    style={{
+                      lineHeight: '1.25rem',
+                      tabSize: 2,
+                      whiteSpace: 'pre-wrap', // 关键设置：保留换行符，但允许自动换行
+                      wordBreak: 'break-word' // 确保长单词也能换行
+                    }}
+                    onKeyDown={handleKeyDown}
+                    ref={textareaRef}
+                    wrap="on"
+                    spellCheck="false"
+                    autoCapitalize="off"
+                    autoComplete="off"
+                    autoCorrect="off"
                   />
-                )}
-                <Textarea
-                  id="json-input"
-                  value={value}
-                  onChange={(e: ChangeEvent<HTMLTextAreaElement>) => {
-                    onInputChange(e.target.value);
-                    // 当用户修改内容时，清除错误行高亮
-                    if (errorLineNumber !== null) {
-                      setErrorLineNumber(null);
-                    }
-                  }}
-                  placeholder={placeholder}
-                  disabled={isProcessing}
-                  className={cn(
-                    "flex-1 w-full font-mono text-sm px-4 py-3 border-0 rounded-none resize-none overflow-y-auto",
-                    "focus-visible:ring-0 focus-visible:ring-offset-0",
-                    "bg-transparent", // 改为透明背景，以便显示错误高亮层
-                    "relative z-20" // 确保文本在高亮层之上
-                  )}
-                  style={{
-                    lineHeight: '1.25rem',
-                  }}
-                  onKeyDown={handleKeyDown}
-                  onScroll={handleScroll}
-                  ref={textareaRef}
-                />
+                </div>
+                
                 {/* 行数显示 */}
-                <div className="flex items-center px-4 py-1 text-xs text-slate-500 dark:text-slate-400 bg-muted/5 dark:bg-muted/10 border-t border-slate-200 dark:border-slate-700">
-                  <span>{lineNumbers.length} 行</span>
+                <div className="flex-shrink-0 flex items-center px-4 py-1 text-xs text-slate-500 dark:text-slate-400 bg-muted/5 dark:bg-muted/10 border-t border-slate-200 dark:border-slate-700">
+                  <span>{totalLines} 行</span>
                 </div>
               </div>
             </div>
