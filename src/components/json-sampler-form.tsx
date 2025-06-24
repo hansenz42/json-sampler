@@ -36,6 +36,7 @@ export function JsonSamplerForm({
 }: JsonSamplerFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const lineNumbersRef = useRef<HTMLPreElement>(null);
   const [listLength, setListLength] = useState(defaultListLength);
   const [localIsLoading, setLocalIsLoading] = useState(false);
   const [applyListLength, setApplyListLength] = useState(true);
@@ -107,6 +108,14 @@ export function JsonSamplerForm({
     return Math.max(1, lines.length);
   }, [value]);
 
+  const lineNumbers = useMemo(() => Array.from({ length: totalLines }, (_, i) => i + 1).join('\n'), [totalLines]);
+
+  const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+    if (lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = e.currentTarget.scrollTop;
+    }
+  };
+
   // 不再需要单独的 handleScroll 函数，因为我们在 textarea 的 onScroll 事件中直接处理了滚动同步
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -141,8 +150,15 @@ export function JsonSamplerForm({
             <div className="relative w-full h-[600px] overflow-hidden rounded-md border border-slate-200 dark:border-slate-700">
               <div className="flex flex-col h-full w-full">
                 {/* 文本区域容器 */}
-                <div className="relative flex-1 overflow-hidden">
-                  {/* 使用原生 textarea */}
+                <div className="relative flex-1 overflow-hidden flex">
+                  {/* 行号与文本区域 */}
+                  <pre
+                    ref={lineNumbersRef}
+                    className="w-12 flex-shrink-0 overflow-hidden bg-muted/5 dark:bg-muted/10 text-right pr-2 py-3 text-xs leading-5 select-none border-r border-slate-200 dark:border-slate-700"
+                    aria-hidden="true"
+                  >
+                    {lineNumbers}
+                  </pre>
                   <textarea
                     id="json-input"
                     value={value}
@@ -152,18 +168,18 @@ export function JsonSamplerForm({
                     placeholder={placeholder}
                     disabled={isProcessing}
                     className={cn(
-                      "w-full h-full font-mono text-sm p-3 border-0 resize-none overflow-auto",
+                      "flex-1 h-full font-mono text-sm p-3 border-0 resize-none overflow-auto",
                       "focus:outline-none focus:ring-0 focus:ring-offset-0"
                     )}
                     style={{
                       lineHeight: '1.25rem',
                       tabSize: 2,
-                      whiteSpace: 'pre-wrap', // 关键设置：保留换行符，但允许自动换行
-                      wordBreak: 'break-word' // 确保长单词也能换行
+                      whiteSpace: 'pre', // 禁止自动换行
                     }}
                     onKeyDown={handleKeyDown}
+                    onScroll={handleScroll}
                     ref={textareaRef}
-                    wrap="on"
+                    wrap="off"
                     spellCheck="false"
                     autoCapitalize="off"
                     autoComplete="off"
